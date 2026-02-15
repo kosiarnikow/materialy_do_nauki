@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Materiały i Zadania</title>
+    <title>Materiały i Zadania (Secure)</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -35,6 +35,36 @@
         }
 
         h1, h2 { text-align: center; color: var(--primary); }
+
+        /* Logowanie */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.95);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 2000; color: white;
+        }
+        
+        #login-box {
+            background: white; padding: 30px; border-radius: 10px;
+            text-align: center; color: #333; width: 300px;
+        }
+
+        #token-input {
+            width: 100%; padding: 10px; margin: 10px 0;
+            border: 1px solid #ccc; border-radius: 5px;
+        }
+
+        .auth-header {
+            width: 100%; max-width: 800px; display: flex; 
+            justify-content: flex-end; margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            background: transparent; color: var(--danger);
+            border: 1px solid var(--danger); padding: 5px 10px;
+            border-radius: 4px; cursor: pointer; font-size: 12px;
+        }
 
         /* Przyciski */
         .btn-grid {
@@ -88,7 +118,7 @@
 
         /* Sekcja Zdjęcia */
         .image-viewer {
-            display: none; /* Ukryte domyślnie */
+            display: none;
             flex-direction: column;
             align-items: center;
             margin-top: 20px;
@@ -139,11 +169,10 @@
             display: inline-block;
         }
 
-        /* Loading Overlay */
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9);
-            display: flex; justify-content: center; align-items: center;
+            justify-content: center; align-items: center;
             z-index: 1000; font-size: 24px; font-weight: bold;
             display: none;
         }
@@ -153,13 +182,26 @@
 </head>
 <body>
 
-<div id="loader">Ładowanie / Zapisywanie...</div>
+<div id="login-overlay">
+    <div id="login-box">
+        <h3>Autoryzacja</h3>
+        <p>Podaj swój GitHub Token, aby zarządzać stroną.</p>
+        <input type="password" id="token-input" placeholder="github_pat_...">
+        <button class="action-btn" onclick="saveToken()">Zaloguj</button>
+        <p style="font-size: 12px; margin-top: 10px; color: #666;">Token zostanie zapisany tylko w Twojej przeglądarce.</p>
+    </div>
+</div>
 
-<div class="container" id="part1">
+<div class="auth-header hidden" id="auth-panel">
+    <button class="logout-btn" onclick="logout()">Wyloguj (Usuń Token)</button>
+</div>
+
+<div id="loader">Przetwarzanie...</div>
+
+<div class="container hidden" id="main-app">
     <h1>Część 1 - Materiały</h1>
     
-    <div class="btn-grid" id="materials-list">
-        </div>
+    <div class="btn-grid" id="materials-list"></div>
 
     <div class="controls">
         <button class="action-btn" onclick="addMaterial()">+ Dodaj pracę</button>
@@ -182,8 +224,7 @@
 <div class="container hidden" id="part2">
     <h2 id="part2-title">Zadania</h2>
     
-    <div class="btn-grid" id="tasks-list">
-        </div>
+    <div class="btn-grid" id="tasks-list"></div>
 
     <div class="controls">
         <button class="action-btn" onclick="addTask()">+ Dodaj zadanie</button>
@@ -207,30 +248,65 @@
 
 <script>
     // --- KONFIGURACJA ---
-    // WYPEŁNIJ TE DANE:
-    const GITHUB_TOKEN = 'TWOJ_TOKEN_GITHUBA_TUTAJ'; 
+    // Te dane mogą zostać w kodzie (są publiczne)
     const REPO_OWNER = 'kosiarnikow'; 
     const REPO_NAME = 'materialy_do_nauki';
     const BRANCH = 'main';
-    const DB_FILE = 'db.json'; // Plik przechowujący strukturę przycisków
+    const DB_FILE = 'db.json';
 
-    // --- STAN APLIKACJI ---
+    // --- STAN ---
     let appData = { materials: [] };
     let currentMaterialId = null;
-    let pendingUploadType = null; // 'material' lub 'task'
+    let pendingUploadType = null;
+    let userToken = null;
 
-    // --- INITIALIZACJA ---
-    window.onload = async () => {
-        await loadData();
+    // --- AUTORYZACJA ---
+    window.onload = () => {
+        const storedToken = localStorage.getItem('gh_token');
+        if (storedToken) {
+            userToken = storedToken;
+            initApp();
+        }
+        // Jeśli nie ma tokenu, login-overlay jest widoczny domyślnie
     };
 
-    // --- OBSŁUGA GITHUB API ---
+    function saveToken() {
+        const input = document.getElementById('token-input').value.trim();
+        if (!input.startsWith('github_pat_') && !input.startsWith('ghp_')) {
+            alert('To nie wygląda na poprawny token GitHub.');
+            return;
+        }
+        userToken = input;
+        localStorage.setItem('gh_token', userToken);
+        initApp();
+    }
+
+    function logout() {
+        if(confirm("Czy na pewno chcesz usunąć token z tego urządzenia?")) {
+            localStorage.removeItem('gh_token');
+            location.reload();
+        }
+    }
+
+    function initApp() {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('main-app').classList.remove('hidden');
+        document.getElementById('auth-panel').classList.remove('hidden');
+        loadData();
+    }
+
+    // --- API GITHUB ---
     async function githubRequest(path, method = 'GET', body = null) {
+        if (!userToken) {
+            alert("Brak tokenu! Zaloguj się ponownie.");
+            return;
+        }
+
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
         const options = {
             method: method,
             headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Authorization': `token ${userToken}`,
                 'Content-Type': 'application/json',
                 'Accept': 'application/vnd.github.v3+json'
             }
@@ -238,36 +314,38 @@
         if (body) options.body = JSON.stringify(body);
         
         const response = await fetch(url, options);
+        
+        if (response.status === 401) {
+            alert("Nieprawidłowy token lub brak uprawnień. Wyloguj się i sprawdź token.");
+        }
+        
         return response;
     }
 
     async function loadData() {
-        document.getElementById('loader').style.display = 'flex';
+        toggleLoader(true);
         try {
             const res = await githubRequest(DB_FILE);
             if (res.status === 404) {
-                // Jeśli bazy nie ma, tworzymy pustą
                 appData = { materials: [] };
-                await saveData(); 
+                await saveData(true); 
             } else if (res.ok) {
                 const data = await res.json();
-                // Dekodowanie Base64 (uwzględnia polskie znaki)
                 const content = decodeURIComponent(escape(atob(data.content)));
                 appData = JSON.parse(content);
             }
             renderMaterials();
         } catch (e) {
             console.error(e);
-            alert("Błąd ładowania danych.");
+            alert("Wystąpił błąd połączenia z GitHub.");
         } finally {
-            document.getElementById('loader').style.display = 'none';
+            toggleLoader(false);
         }
     }
 
-    async function saveData() {
-        document.getElementById('loader').style.display = 'flex';
+    async function saveData(silent = false) {
+        if (!silent) toggleLoader(true);
         try {
-            // Pobierz SHA pliku, żeby móc go nadpisać
             const getRes = await githubRequest(DB_FILE);
             let sha = null;
             if (getRes.ok) {
@@ -275,11 +353,9 @@
                 sha = data.sha;
             }
 
-            // Kodowanie do Base64 (bezpieczne dla UTF-8)
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(appData))));
-
             const body = {
-                message: "Aktualizacja bazy danych (stronka)",
+                message: "Update db.json",
                 content: content,
                 branch: BRANCH
             };
@@ -287,15 +363,14 @@
 
             await githubRequest(DB_FILE, 'PUT', body);
         } catch (e) {
-            console.error(e);
-            alert("Błąd zapisywania danych.");
+            alert("Błąd zapisu!");
         } finally {
-            document.getElementById('loader').style.display = 'none';
+            if (!silent) toggleLoader(false);
         }
     }
 
     async function uploadImage(file, filename) {
-        document.getElementById('loader').style.display = 'flex';
+        toggleLoader(true);
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -305,37 +380,41 @@
                 
                 try {
                     const body = {
-                        message: `Dodano zdjęcie: ${filename}`,
+                        message: `Upload ${filename}`,
                         content: base64Content,
                         branch: BRANCH
                     };
                     const res = await githubRequest(path, 'PUT', body);
                     if (res.ok) {
                         const data = await res.json();
-                        resolve(data.content.download_url); // Zwraca link do zdjęcia
+                        resolve(data.content.download_url);
                     } else {
-                        reject("Błąd uploadu GitHub");
+                        reject("GitHub Error");
                     }
                 } catch (e) {
                     reject(e);
                 } finally {
-                    document.getElementById('loader').style.display = 'none';
+                    toggleLoader(false);
                 }
             };
         });
     }
 
-    // --- LOGIKA UI: MATERIAŁY ---
+    // --- UI HELPERS ---
+    function toggleLoader(show) {
+        const loader = document.getElementById('loader');
+        if (loader) loader.style.display = show ? 'flex' : 'none';
+    }
+
+    // --- LOGIKA MATERIAŁÓW I ZADAŃ ---
     function renderMaterials() {
         const list = document.getElementById('materials-list');
         list.innerHTML = '';
-        
         appData.materials.forEach(mat => {
             const btn = document.createElement('button');
             btn.className = 'item-btn';
             btn.innerText = mat.name;
             if (currentMaterialId === mat.id) btn.classList.add('active');
-            
             btn.onclick = () => selectMaterial(mat.id);
             list.appendChild(btn);
         });
@@ -351,54 +430,46 @@
             alert("Deklu, co chcesz usuwać jak żadnych prac nie ma");
             return;
         }
+        if (prompt("Podaj hasło do usunięcia:") !== '2137') {
+            alert("Błędne hasło."); return;
+        }
 
-        const pass = prompt("Podaj hasło do usunięcia:");
-        if (pass === '2137') {
-            const nameToDelete = prompt("Podaj nazwę przycisku do usunięcia (dokładnie):");
-            const idx = appData.materials.findIndex(m => m.name === nameToDelete);
-            
-            if (idx > -1) {
-                appData.materials.splice(idx, 1);
-                currentMaterialId = null;
-                document.getElementById('part2').classList.add('hidden');
-                document.getElementById('material-viewer').style.display = 'none';
-                saveData().then(() => renderMaterials());
-            } else {
-                alert("Nie znaleziono takiego przycisku.");
-            }
+        const nameToDelete = prompt("Podaj nazwę przycisku do usunięcia:");
+        const idx = appData.materials.findIndex(m => m.name === nameToDelete);
+        
+        if (idx > -1) {
+            appData.materials.splice(idx, 1);
+            currentMaterialId = null;
+            document.getElementById('part2').classList.add('hidden');
+            document.getElementById('material-viewer').style.display = 'none';
+            saveData().then(() => renderMaterials());
         } else {
-            alert("Błędne hasło.");
+            alert("Nie znaleziono.");
         }
     }
 
     function selectMaterial(id) {
         currentMaterialId = id;
-        renderMaterials(); // odśwież klasy active
+        renderMaterials();
         
         const mat = appData.materials.find(m => m.id === id);
-        
-        // Pokaż viewer
         const viewer = document.getElementById('material-viewer');
         viewer.style.display = 'flex';
         document.getElementById('mat-img').src = mat.imageUrl;
         document.getElementById('mat-download').href = mat.imageUrl;
         resetTransform('mat');
 
-        // Pokaż część 2
         document.getElementById('part2').classList.remove('hidden');
         renderTasks();
     }
 
-    // --- LOGIKA UI: ZADANIA ---
     function renderTasks() {
         const mat = appData.materials.find(m => m.id === currentMaterialId);
         const list = document.getElementById('tasks-list');
-        const viewer = document.getElementById('task-viewer');
         list.innerHTML = '';
-        viewer.style.display = 'none'; // ukryj stare zdjęcie zadania
+        document.getElementById('task-viewer').style.display = 'none';
 
         if (!mat.tasks) mat.tasks = [];
-
         mat.tasks.forEach(task => {
             const btn = document.createElement('button');
             btn.className = 'item-btn';
@@ -420,21 +491,19 @@
             alert("Deklu, co chcesz usuwać jak żadnych zadań nie ma");
             return;
         }
+        if (prompt("Podaj hasło do usunięcia:") !== '2137') {
+            alert("Błędne hasło."); return;
+        }
 
-        const pass = prompt("Podaj hasło do usunięcia:");
-        if (pass === '2137') {
-            const nameToDelete = prompt("Podaj nazwę zadania do usunięcia:");
-            const idx = mat.tasks.findIndex(t => t.name === nameToDelete);
-            
-            if (idx > -1) {
-                mat.tasks.splice(idx, 1);
-                document.getElementById('task-viewer').style.display = 'none';
-                saveData().then(() => renderTasks());
-            } else {
-                alert("Nie znaleziono takiego zadania.");
-            }
+        const nameToDelete = prompt("Podaj nazwę zadania do usunięcia:");
+        const idx = mat.tasks.findIndex(t => t.name === nameToDelete);
+        
+        if (idx > -1) {
+            mat.tasks.splice(idx, 1);
+            document.getElementById('task-viewer').style.display = 'none';
+            saveData().then(() => renderTasks());
         } else {
-            alert("Błędne hasło.");
+            alert("Nie znaleziono.");
         }
     }
 
@@ -446,63 +515,42 @@
         resetTransform('task');
     }
 
-    // --- OBSŁUGA PLIKÓW ---
     document.getElementById('file-input').addEventListener('change', async function() {
         if (this.files && this.files[0]) {
             const file = this.files[0];
             const name = prompt("Podaj nazwę przycisku:");
-            
             if (!name) return;
 
             try {
                 const imageUrl = await uploadImage(file, file.name);
-                
                 if (pendingUploadType === 'material') {
-                    appData.materials.push({
-                        id: Date.now(),
-                        name: name,
-                        imageUrl: imageUrl,
-                        tasks: []
-                    });
+                    appData.materials.push({ id: Date.now(), name: name, imageUrl: imageUrl, tasks: [] });
                     renderMaterials();
                 } else if (pendingUploadType === 'task') {
                     const mat = appData.materials.find(m => m.id === currentMaterialId);
                     if (!mat.tasks) mat.tasks = [];
-                    mat.tasks.push({
-                        id: Date.now(),
-                        name: name,
-                        imageUrl: imageUrl
-                    });
+                    mat.tasks.push({ id: Date.now(), name: name, imageUrl: imageUrl });
                     renderTasks();
                 }
-                
                 await saveData();
             } catch (e) {
-                alert("Błąd podczas dodawania: " + e);
+                alert("Błąd: " + e);
             }
         }
-        this.value = ''; // reset inputa
+        this.value = '';
     });
 
-    // --- TRANSFORMACJE (ZOOM/PAN) ---
     function updateTransform(prefix) {
         const img = document.getElementById(`${prefix}-img`);
         const inputs = document.querySelectorAll(`#${prefix}-viewer input`);
-        const zoom = inputs[0].value;
-        const y = inputs[1].value;
-        const x = inputs[2].value;
-
-        img.style.transform = `scale(${zoom}) translate(${x}px, ${y}px)`;
+        img.style.transform = `scale(${inputs[0].value}) translate(${inputs[2].value}px, ${inputs[1].value}px)`;
     }
 
     function resetTransform(prefix) {
         const inputs = document.querySelectorAll(`#${prefix}-viewer input`);
-        inputs[0].value = 1;
-        inputs[1].value = 0;
-        inputs[2].value = 0;
+        inputs[0].value = 1; inputs[1].value = 0; inputs[2].value = 0;
         updateTransform(prefix);
     }
-
 </script>
 
 </body>
