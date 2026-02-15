@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manager Prac i Zadań</title>
+    <title>Manager Prac i Zadań - GitHub</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -14,14 +14,13 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
             margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: #1e293b;
         }
 
         .container {
@@ -30,316 +29,300 @@
             background: var(--card-bg);
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        h1, h2 { text-align: center; color: #334155; }
+        /* PANEL USTAWIEŃ - TO TEGO BRAKOWAŁO */
+        .config-panel {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 2px solid #cbd5e1;
+        }
 
-        /* Sekcja Przycisków */
+        .config-panel h3 { margin-top: 0; color: #334155; }
+        
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 12px; font-weight: bold; color: #64748b; }
+        
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            box-sizing: border-box; /* Ważne, żeby nie wystawało */
+        }
+
+        h1, h2 { text-align: center; color: #1e293b; }
+
         .button-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 10px;
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
         }
 
         button {
-            padding: 12px 18px;
+            padding: 12px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: 0.2s;
         }
 
-        .btn-work { background-color: #e2e8f0; color: #475569; }
-        .btn-work:hover { background-color: #cbd5e1; }
-        .btn-work.active { background-color: var(--primary); color: white; }
+        .btn-work { background: #e2e8f0; color: #475569; border: 1px solid #cbd5e1; }
+        .btn-work:hover { background: #cbd5e1; }
+        .btn-add { background: var(--success); color: white; width: 100%; margin-top: 10px; }
+        .btn-delete { background: var(--danger); color: white; width: 100%; margin-top: 5px; }
 
-        .btn-add { background-color: var(--success); color: white; }
-        .btn-delete { background-color: var(--danger); color: white; }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin: 20px 0;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 20px;
-        }
-
-        /* Podgląd Zdjęcia */
+        /* Viewer Zdjęć */
         #viewer-section {
             display: none;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 30px;
-            padding: 20px;
-            border: 2px dashed #e2e8f0;
-            border-radius: 12px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #f1f5f9;
         }
 
-        .image-container {
+        .img-container {
             width: 100%;
-            height: 400px;
+            height: 500px;
+            background: #000;
             overflow: hidden;
             position: relative;
-            background: #000;
-            border-radius: 8px;
+            border-radius: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        #main-image {
+        #main-img {
             max-width: none;
-            transition: transform 0.1s;
-            cursor: move;
+            position: absolute;
+            transition: transform 0.1s ease-out;
         }
 
         .sliders {
-            width: 100%;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
             margin: 20px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
         }
 
-        .slider-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .slider-group label { min-width: 80px; font-size: 0.9em; }
-
-        input[type="range"] { flex-grow: 1; }
-
-        /* Stylizacja dla usuwania */
-        .delete-mode .btn-work:hover {
-            background-color: var(--danger) !important;
-            color: white;
-        }
+        .slider-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+        .slider-row label { min-width: 120px; font-size: 14px; }
+        .slider-row input { flex: 1; }
 
         .hidden { display: none; }
+        .delete-mode-active { 
+            animation: pulse-red 1s infinite;
+            border: 2px solid var(--danger) !important;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- PANEL KONFIGURACJI -->
+    <div class="config-panel">
+        <h3>⚙️ Konfiguracja Połączenia z GitHub</h3>
+        <div class="input-group">
+            <label>TWÓJ LOGIN GITHUB:</label>
+            <input type="text" id="gh-user" placeholder="np. kosiarnikow">
+        </div>
+        <div class="input-group">
+            <label>NAZWA REPOZYTORIUM:</label>
+            <input type="text" id="gh-repo" placeholder="np. materialy_do_nauki">
+        </div>
+        <div class="input-group">
+            <label>GITHUB TOKEN (PAT):</label>
+            <input type="password" id="gh-token" placeholder="github_pat_...">
+        </div>
+        <p style="font-size: 11px; color: #64748b;">Dane zapisują się tylko w Twojej przeglądarce.</p>
+    </div>
+
     <h1>Część 1 - Materiały</h1>
-    <div id="work-buttons" class="button-grid">
-        <!-- Tu pojawią się przyciski prac -->
+    <div id="work-buttons" class="button-grid"></div>
+    
+    <div style="display: flex; gap: 10px;">
+        <button class="btn-add" onclick="addItem('work')">➕ Dodaj pracę</button>
+        <button class="btn-delete" onclick="toggleDelete('work')">🗑️ Usuń pracę</button>
     </div>
 
-    <div class="controls">
-        <button class="btn-add" onclick="triggerAddWork()">Dodaj pracę</button>
-        <button class="btn-delete" onclick="toggleDeleteMode('work')">Usuń pracę</button>
-    </div>
-
-    <!-- Sekcja wyświetlania wybranej pracy -->
+    <!-- PODGLĄD ZDJĘCIA I CZĘŚĆ 2 -->
     <div id="viewer-section">
         <h2 id="current-title">Podgląd</h2>
         
-        <div class="image-container">
-            <img id="main-image" src="" alt="Podgląd">
+        <div class="img-container">
+            <img id="main-img" src="" alt="">
         </div>
 
         <div class="sliders">
-            <div class="slider-group">
+            <div class="slider-row">
                 <label>Powiększenie:</label>
-                <input type="range" id="zoom" min="0.1" max="3" step="0.1" value="1" oninput="updateImageStyle()">
+                <input type="range" id="zoom" min="0.1" max="5" step="0.1" value="1">
             </div>
-            <div class="slider-group">
-                <label>Poziomo:</label>
-                <input type="range" id="posX" min="-500" max="500" value="0" oninput="updateImageStyle()">
+            <div class="slider-row">
+                <label>Poziomo (X):</label>
+                <input type="range" id="posX" min="-1000" max="1000" value="0">
             </div>
-            <div class="slider-group">
-                <label>Pionowo:</label>
-                <input type="range" id="posY" min="-500" max="500" value="0" oninput="updateImageStyle()">
+            <div class="slider-row">
+                <label>Pionowo (Y):</label>
+                <input type="range" id="posY" min="-1000" max="1000" value="0">
             </div>
+            <button class="btn-work" style="width: 100%" onclick="downloadImage()">⬇️ Pobierz to zdjęcie</button>
         </div>
 
-        <button class="btn-add" style="background: #475569;" onclick="downloadImage()">Pobierz zdjęcie</button>
-
-        <hr style="width:100%; margin: 30px 0;">
-
+        <hr>
         <h2>Część 2 - Zadania</h2>
-        <div id="task-buttons" class="button-grid">
-            <!-- Tu pojawią się przyciski zadań -->
-        </div>
-        <div class="controls">
-            <button class="btn-add" onclick="triggerAddTask()">Dodaj zadanie</button>
-            <button class="btn-delete" onclick="toggleDeleteMode('task')">Usuwanie</button>
+        <div id="task-buttons" class="button-grid"></div>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-add" onclick="addItem('task')">➕ Dodaj zadanie</button>
+            <button class="btn-delete" onclick="toggleDelete('task')">🗑️ Usuwanie</button>
         </div>
     </div>
 </div>
 
-<!-- Ukryte inputy do plików -->
-<input type="file" id="file-input" class="hidden" accept="image/*">
+<input type="file" id="file-selector" class="hidden" accept="image/*">
 
 <script>
-    let works = JSON.parse(localStorage.getItem('myWorks')) || [];
-    let currentWorkIndex = null;
-    let deleteMode = { work: false, task: false };
+    // Inicjalizacja danych
+    let db = JSON.parse(localStorage.getItem('app_data')) || [];
+    let currentIdx = null;
+    let isDeleteMode = { work: false, task: false };
 
-    // Funkcja dodawania pracy
-    function triggerAddWork() {
+    // Automatyczne wczytywanie ustawień z pamięci
+    ['gh-user', 'gh-repo', 'gh-token'].forEach(id => {
+        const saved = localStorage.getItem('conf_' + id);
+        if(saved) document.getElementById(id).value = saved;
+        document.getElementById(id).addEventListener('input', (e) => {
+            localStorage.setItem('conf_' + id, e.target.value);
+        });
+    });
+
+    function render() {
+        const grid = document.getElementById('work-buttons');
+        grid.innerHTML = '';
+        db.forEach((item, i) => {
+            const btn = document.createElement('button');
+            btn.className = `btn-work ${isDeleteMode.work ? 'delete-mode-active' : ''}`;
+            btn.innerText = item.name;
+            btn.onclick = () => isDeleteMode.work ? confirmRemove('work', i) : openWork(i);
+            grid.appendChild(btn);
+        });
+        localStorage.setItem('app_data', JSON.stringify(db));
+    }
+
+    async function addItem(type) {
+        const user = document.getElementById('gh-user').value;
+        const repo = document.getElementById('gh-repo').value;
+        const token = document.getElementById('gh-token').value;
+
+        if(!token || !user) return alert("Uzupełnij ustawienia GitHub na górze!");
+
         const name = prompt("Podaj nazwę przycisku:");
-        if (!name) return;
+        if(!name) return;
 
-        const fileInput = document.getElementById('file-input');
-        fileInput.onchange = e => {
+        const fileInput = document.getElementById('file-selector');
+        fileInput.onchange = async (e) => {
             const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = function(event) {
-                works.push({
-                    name: name,
-                    image: event.target.result,
-                    tasks: []
-                });
-                saveAndRender();
+            
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                const fileName = `images/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+                
+                try {
+                    const res = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${fileName}`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: "Upload", content: base64 })
+                    });
+                    
+                    const json = await res.json();
+                    if(json.content) {
+                        const url = json.content.download_url;
+                        if(type === 'work') db.push({ name, url, tasks: [] });
+                        else db[currentIdx].tasks.push({ name, url });
+                        render();
+                        if(type === 'task') openWork(currentIdx);
+                    } else {
+                        alert("Błąd podczas wysyłania. Sprawdź token i nazwę repozytorium.");
+                    }
+                } catch (err) { alert("Błąd połączenia!"); }
             };
             reader.readAsDataURL(file);
         };
         fileInput.click();
     }
 
-    // Funkcja dodawania zadania do aktualnej pracy
-    function triggerAddTask() {
-        const name = prompt("Podaj nazwę zadania (np. zad 1):");
-        if (!name) return;
-
-        const fileInput = document.getElementById('file-input');
-        fileInput.onchange = e => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                works[currentWorkIndex].tasks.push({
-                    name: name,
-                    image: event.target.result
-                });
-                saveAndRender();
-                showWork(currentWorkIndex);
-            };
-            reader.readAsDataURL(file);
-        };
-        fileInput.click();
-    }
-
-    function saveAndRender() {
-        localStorage.setItem('myWorks', JSON.stringify(works));
-        renderButtons();
-    }
-
-    function renderButtons() {
-        const container = document.getElementById('work-buttons');
-        container.innerHTML = '';
-        works.forEach((work, index) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-work';
-            btn.innerText = work.name;
-            btn.onclick = () => handleButtonClick(index, 'work');
-            container.appendChild(btn);
-        });
-    }
-
-    function handleButtonClick(index, type) {
-        if (type === 'work') {
-            if (deleteMode.work) {
-                confirmDelete(() => {
-                    works.splice(index, 1);
-                    currentWorkIndex = null;
-                    document.getElementById('viewer-section').style.display = 'none';
-                    saveAndRender();
-                });
-            } else {
-                showWork(index);
-            }
-        } else if (type === 'task') {
-            if (deleteMode.task) {
-                confirmDelete(() => {
-                    works[currentWorkIndex].tasks.splice(index, 1);
-                    saveAndRender();
-                    showWork(currentWorkIndex);
-                });
-            } else {
-                showTask(index);
-            }
-        }
-    }
-
-    function showWork(index) {
-        currentWorkIndex = index;
-        const work = works[index];
-        document.getElementById('viewer-section').style.display = 'flex';
-        document.getElementById('current-title').innerText = work.name;
-        document.getElementById('main-image').src = work.image;
-        resetSliders();
-
-        // Renderowanie zadań
-        const taskContainer = document.getElementById('task-buttons');
-        taskContainer.innerHTML = '';
-        work.tasks.forEach((task, tIndex) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-work';
-            btn.innerText = task.name;
-            btn.onclick = () => handleButtonClick(tIndex, 'task');
-            taskContainer.appendChild(btn);
-        });
-    }
-
-    function showTask(tIndex) {
-        const task = works[currentWorkIndex].tasks[tIndex];
-        document.getElementById('current-title').innerText = task.name;
-        document.getElementById('main-image').src = task.image;
-        resetSliders();
-    }
-
-    function confirmDelete(callback) {
-        const password = prompt("Podaj hasło, aby usunąć:");
-        if (password === "2137") {
-            callback();
-        } else {
-            alert("Błędne hasło!");
-        }
-    }
-
-    function toggleDeleteMode(type) {
-        deleteMode[type] = !deleteMode[type];
-        const containerId = type === 'work' ? 'work-buttons' : 'task-buttons';
-        document.getElementById(containerId).classList.toggle('delete-mode');
+    function openWork(i) {
+        currentIdx = i;
+        const item = db[i];
+        document.getElementById('viewer-section').style.display = 'block';
+        showImg(item.url, item.name);
         
-        if(deleteMode[type]) {
-            alert("Tryb usuwania aktywny. Kliknij przycisk, który chcesz usunąć.");
-        }
+        const taskGrid = document.getElementById('task-buttons');
+        taskGrid.innerHTML = '';
+        item.tasks.forEach((t, ti) => {
+            const btn = document.createElement('button');
+            btn.className = `btn-work ${isDeleteMode.task ? 'delete-mode-active' : ''}`;
+            btn.innerText = t.name;
+            btn.onclick = () => isDeleteMode.task ? confirmRemove('task', ti) : showImg(t.url, t.name);
+            taskGrid.appendChild(btn);
+        });
     }
 
-    function updateImageStyle() {
-        const zoom = document.getElementById('zoom').value;
-        const x = document.getElementById('posX').value;
-        const y = document.getElementById('posY').value;
-        const img = document.getElementById('main-image');
-        img.style.transform = `translate(${x}px, ${y}px) scale(${zoom})`;
+    function showImg(url, title) {
+        document.getElementById('current-title').innerText = title;
+        const img = document.getElementById('main-img');
+        img.src = url;
+        resetImg();
     }
 
-    function resetSliders() {
-        document.getElementById('zoom').value = 1;
-        document.getElementById('posX').value = 0;
-        document.getElementById('posY').value = 0;
-        updateImageStyle();
+    function toggleDelete(type) {
+        const pass = prompt("Podaj hasło:");
+        if(pass === "2137") {
+            isDeleteMode[type] = !isDeleteMode[type];
+            render();
+            if(currentIdx !== null) openWork(currentIdx);
+        } else { alert("Błędne hasło!"); }
+    }
+
+    function confirmRemove(type, i) {
+        if(type === 'work') { db.splice(i, 1); document.getElementById('viewer-section').style.display = 'none'; }
+        else { db[currentIdx].tasks.splice(i, 1); openWork(currentIdx); }
+        isDeleteMode[type] = false;
+        render();
+    }
+
+    // Obsługa suwaków
+    const img = document.getElementById('main-img');
+    const zoom = document.getElementById('zoom'), pX = document.getElementById('posX'), pY = document.getElementById('posY');
+    
+    [zoom, pX, pY].forEach(el => el.oninput = () => {
+        img.style.transform = `translate(${pX.value}px, ${pY.value}px) scale(${zoom.value})`;
+    });
+
+    function resetImg() {
+        zoom.value = 1; pX.value = 0; pY.value = 0;
+        img.style.transform = `translate(0,0) scale(1)`;
     }
 
     function downloadImage() {
-        const link = document.createElement('a');
-        link.download = 'zdjecie.png';
-        link.href = document.getElementById('main-image').src;
-        link.click();
+        const a = document.createElement('a');
+        a.href = img.src;
+        a.download = "pobrane_zdjecie.png";
+        a.click();
     }
 
-    // Inicjalizacja
-    renderButtons();
+    render();
 </script>
-
 </body>
 </html>
