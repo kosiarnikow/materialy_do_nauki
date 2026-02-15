@@ -3,7 +3,12 @@
     {
       "name": "kolokwium 0",
       "url": "https://raw.githubusercontent.com/kosiarnikow/materialy_do_nauki/main/images/1771166267774_egz_OG_num1.jpg",
-      "tasks": []
+      "tasks": [
+        {
+          "name": "zad 1 - teoria",
+          "url": "https://raw.githubusercontent.com/kosiarnikow/materialy_do_nauki/main/images/1771169329958_def_granicaWlasciwa.png"
+        }
+      ]
     },
     {
       "name": "kolokwium 1",
