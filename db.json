@@ -8,7 +8,12 @@
     {
       "name": "kolokwium 1",
       "url": "https://raw.githubusercontent.com/kosiarnikow/materialy_do_nauki/main/images/1771166800458_egz_OG_num2.jpg",
-      "tasks": []
+      "tasks": [
+        {
+          "name": "zad 1 - teoria",
+          "url": "https://raw.githubusercontent.com/kosiarnikow/materialy_do_nauki/main/images/1771169464294_twierdzenieOTrzechCia_gach.png"
+        }
+      ]
     },
     {
       "name": "kolokwium wcześniejsze 1",
