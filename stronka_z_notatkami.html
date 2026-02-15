@@ -164,30 +164,37 @@
 <input type="file" id="fileInput" hidden accept="image/*">
 
 <script>
-    // --- KONFIGURACJA (UZUPEŁNIJ) ---
+    // --- KONFIGURACJA ---
     const CONFIG = {
-        token: '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', // TWÓJ TOKEN
+        token: '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', // Wklej swój token
         owner: 'kosiarnikow',
         repo: 'materialy_do_nauki'
     };
 
-let db = { materials: [] };
+    let db = { materials: [] };
     let activeMatIdx = null;
 
-    // Funkcja startowa
+    // Bezpieczne kodowanie UTF-8 dla btoa/atob (obsługa polskich znaków)
+    const utf8_to_b64 = (str) => btoa(unescape(encodeURIComponent(str)));
+    const b64_to_utf8 = (str) => decodeURIComponent(escape(atob(str)));
+
     async function init() {
         toggleLoading(true);
+        console.log("Inicjalizacja bazy...");
         try {
             const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json?nocache=${Date.now()}`, {
                 headers: { 'Authorization': `token ${CONFIG.token}` }
             });
             if (res.ok) {
                 const data = await res.json();
-                db = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+                db = JSON.parse(b64_to_utf8(data.content));
+                console.log("Baza załadowana:", db);
                 renderMaterials();
+            } else {
+                console.warn("Nie znaleziono pliku db.json, zaczynamy z pustą bazą.");
             }
         } catch (e) {
-            console.error("Błąd przy pobieraniu bazy:", e);
+            console.error("Błąd inicjalizacji:", e);
         } finally {
             toggleLoading(false);
         }
@@ -206,10 +213,10 @@ let db = { materials: [] };
     }
 
     function selectMaterial(idx) {
+        console.log("Wybrano materiał:", db.materials[idx].name);
         activeMatIdx = idx;
         const mat = db.materials[idx];
         
-        // Inicjalizacja listy zadań jeśli nie istnieje
         if (!mat.tasks) mat.tasks = [];
 
         document.getElementById('viewer').style.display = 'block';
@@ -239,7 +246,6 @@ let db = { materials: [] };
         });
     }
 
-    // GŁÓWNA FUNKCJA DODAWANIA
     async function addNewItem(type) {
         if (type === 'task' && activeMatIdx === null) {
             alert("Najpierw wybierz materiał z góry!");
@@ -254,45 +260,46 @@ let db = { materials: [] };
             const file = e.target.files[0];
             if (!file) return;
 
-            toggleLoading(true); // Włączamy loader
+            toggleLoading(true);
+            console.log("Rozpoczynanie dodawania:", label);
 
             try {
                 const reader = new FileReader();
                 reader.onload = async () => {
                     try {
                         const base64 = reader.result.split(',')[1];
-                        // Usuwamy znaki specjalne z nazwy pliku
                         const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
                         const path = `images/${Date.now()}_${cleanFileName}`;
                         
-                        // 1. Wyślij zdjęcie na GitHub
+                        // 1. Wyślij zdjęcie
+                        console.log("Wysyłanie zdjęcia do GitHub...");
                         const imgUrl = await githubPut(path, base64);
                         
-                        // 2. Aktualizacja lokalnej bazy danych
+                        // 2. Aktualizacja bazy lokalnej
                         if (type === 'material') {
                             db.materials.push({ name: label, url: imgUrl, tasks: [] });
                         } else {
-                            if (!db.materials[activeMatIdx].tasks) db.materials[activeMatIdx].tasks = [];
                             db.materials[activeMatIdx].tasks.push({ name: label, url: imgUrl });
                         }
                         
-                        // 3. Zapisz bazę na GitHub
+                        // 3. Zapisz bazę
+                        console.log("Zapisywanie bazy db.json...");
                         await saveDB();
                         
-                        // 4. Odśwież widok
+                        // 4. Sukces
                         renderMaterials();
                         if (activeMatIdx !== null) renderTasks();
-                        
                         alert("Sukces! Dodano: " + label);
-                    } catch (innerError) {
-                        alert("Błąd podczas przesyłania: " + innerError.message);
+                    } catch (err) {
+                        console.error("Błąd wewnętrzny:", err);
+                        alert("Błąd: " + err.message);
                     } finally {
-                        toggleLoading(false); // WYŁĄCZAMY LOADER ZAWSZE
+                        toggleLoading(false);
                     }
                 };
                 reader.readAsDataURL(file);
-            } catch (outerError) {
-                alert("Błąd odczytu pliku: " + outerError.message);
+            } catch (err) {
+                console.error("Błąd FileReader:", err);
                 toggleLoading(false);
             }
         };
@@ -301,12 +308,10 @@ let db = { materials: [] };
 
     async function removeItem(type) {
         const list = type === 'material' ? db.materials : (db.materials[activeMatIdx] ? db.materials[activeMatIdx].tasks : []);
-        
         if (!list || list.length === 0) {
             alert("deklu, co chcesz usuwać jak żadnych prac nie ma");
             return;
         }
-
         const pass = prompt("Hasło:");
         if (pass !== "2137") { alert("Złe hasło!"); return; }
 
@@ -332,47 +337,62 @@ let db = { materials: [] };
         }
     }
 
-    // Komunikacja z GitHub
     async function githubPut(path, contentBase64) {
         const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
         const res = await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${CONFIG.token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: "upload image", content: contentBase64 })
+            body: JSON.stringify({ message: "Dodanie zdjęcia", content: contentBase64 })
         });
-        if (!res.ok) throw new Error("GitHub odrzucił plik. Sprawdź token.");
-        const d = await res.json();
-        return d.content.download_url;
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error("GitHub error: " + errData.message);
+        }
+        // Budujemy link bezpośredni zamiast d.content.download_url
+        return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/main/${path}`;
     }
 
     async function saveDB() {
         const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json`;
         
-        // Pobieramy aktualny SHA pliku db.json
+        // ZAWSZE pobieraj najnowsze SHA przed zapisem
         const getRes = await fetch(url + `?nocache=${Date.now()}`, {
             headers: { 'Authorization': `token ${CONFIG.token}` }
         });
-        const getData = await getRes.json();
         
-        // Zapisujemy nową wersję
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(db, null, 2))));
+        let sha = "";
+        if (getRes.ok) {
+            const getData = await getRes.json();
+            sha = getData.sha;
+        }
+        
+        const content = utf8_to_b64(JSON.stringify(db, null, 2));
         const putRes = await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${CONFIG.token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                message: "update database",
+                message: "Aktualizacja bazy",
                 content: content,
-                sha: getData.sha
+                sha: sha // Jeśli plik nie istniał, sha będzie puste i to jest ok
             })
         });
-        if (!putRes.ok) throw new Error("Błąd zapisu bazy danych (db.json).");
+        
+        if (!putRes.ok) {
+            const errData = await putRes.json();
+            throw new Error("Błąd zapisu db.json: " + errData.message);
+        }
     }
 
     function updateImage(url) {
+        console.log("Ładowanie zdjęcia:", url);
         const img = document.getElementById('display-img');
         img.src = url;
+        
+        // Naprawa przycisku pobierania
         const dl = document.getElementById('download-link');
         dl.href = url;
+        dl.target = "_blank";
+        dl.innerText = "Pobierz zdjęcie";
         
         document.getElementById('z').value = 1;
         document.getElementById('x').value = 0;
@@ -385,7 +405,6 @@ let db = { materials: [] };
         const z = document.getElementById('z').value;
         const x = document.getElementById('x').value;
         const y = document.getElementById('y').value;
-        // X i Y działają teraz zgodnie z intuicją (suwak w lewo = obraz w lewo)
         img.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${z})`;
     }
 
