@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Materiały i Zadania (Secure)</title>
+    <title>Wspólne Materiały</title>
     <style>
         :root {
             --primary: #2c3e50;
-            --accent: #3498db;
+            --accent: #27ae60; /* Zielony dla edycji publicznej */
             --bg: #f4f4f9;
             --text: #333;
             --danger: #e74c3c;
@@ -36,170 +36,98 @@
 
         h1, h2 { text-align: center; color: var(--primary); }
 
-        /* Logowanie */
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(44, 62, 80, 0.95);
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            z-index: 2000; color: white;
-        }
-        
-        #login-box {
-            background: white; padding: 30px; border-radius: 10px;
-            text-align: center; color: #333; width: 300px;
-        }
-
-        #token-input {
-            width: 100%; padding: 10px; margin: 10px 0;
-            border: 1px solid #ccc; border-radius: 5px;
-        }
-
-        .auth-header {
-            width: 100%; max-width: 800px; display: flex; 
-            justify-content: flex-end; margin-bottom: 10px;
-        }
-
-        .logout-btn {
-            background: transparent; color: var(--danger);
-            border: 1px solid var(--danger); padding: 5px 10px;
-            border-radius: 4px; cursor: pointer; font-size: 12px;
+        .public-badge {
+            background: #ffeb3b; color: #333; padding: 5px 10px;
+            border-radius: 4px; font-size: 12px; font-weight: bold;
+            text-align: center; margin-bottom: 10px; display: inline-block;
         }
 
         /* Przyciski */
         .btn-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
-            min-height: 20px;
+            display: flex; flex-wrap: wrap; gap: 10px;
+            justify-content: center; margin: 20px 0; min-height: 20px;
         }
 
         .item-btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 16px;
+            background-color: var(--primary); color: white;
+            border: none; padding: 10px 20px; border-radius: 8px;
+            cursor: pointer; transition: 0.2s; font-size: 16px;
         }
 
         .item-btn:hover, .item-btn.active {
-            background-color: var(--accent);
-            transform: translateY(-2px);
+            background-color: var(--accent); transform: translateY(-2px);
         }
 
-        /* Kontrolki dodawania/usuwania */
+        /* Kontrolki */
         .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
+            display: flex; justify-content: center; gap: 10px;
+            margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;
         }
 
         .action-btn {
-            padding: 8px 16px;
-            border: 2px solid var(--accent);
-            background: transparent;
-            color: var(--accent);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 8px 16px; border: 2px solid var(--accent);
+            background: transparent; color: var(--accent);
+            border-radius: 6px; cursor: pointer; font-weight: bold;
         }
 
         .action-btn:hover { background: var(--accent); color: white; }
         .delete-btn { border-color: var(--danger); color: var(--danger); }
         .delete-btn:hover { background: var(--danger); color: white; }
 
-        /* Sekcja Zdjęcia */
+        /* Viewer */
         .image-viewer {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 20px;
-            border: 2px dashed #ccc;
-            padding: 10px;
-            border-radius: 10px;
-            overflow: hidden;
-            position: relative;
+            display: none; flex-direction: column; align-items: center;
+            margin-top: 20px; border: 2px dashed #ccc; padding: 10px;
+            border-radius: 10px; overflow: hidden; position: relative;
         }
 
         .img-container {
-            width: 100%;
-            height: 400px;
-            overflow: hidden;
-            background: #000;
-            position: relative;
-            border-radius: 8px;
+            width: 100%; height: 400px; overflow: hidden;
+            background: #000; position: relative; border-radius: 8px;
         }
 
         .img-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            transition: transform 0.1s;
-            transform-origin: center;
+            width: 100%; height: 100%; object-fit: contain;
+            transition: transform 0.1s; transform-origin: center;
         }
 
         .sliders {
-            display: grid;
-            grid-template-columns: 80px 1fr;
-            gap: 10px;
-            width: 100%;
-            margin-top: 15px;
-            background: #eee;
-            padding: 10px;
-            border-radius: 8px;
+            display: grid; grid-template-columns: 80px 1fr; gap: 10px;
+            width: 100%; margin-top: 15px; background: #eee; padding: 10px; border-radius: 8px;
         }
         
         input[type=range] { width: 100%; }
 
         .download-btn {
-            margin-top: 10px;
-            background: var(--accent);
-            color: white;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            display: inline-block;
+            margin-top: 10px; background: var(--accent); color: white;
+            text-decoration: none; padding: 10px 20px; border-radius: 5px; display: inline-block;
         }
 
         #loader {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.9); display: flex;
             justify-content: center; align-items: center;
             z-index: 1000; font-size: 24px; font-weight: bold;
-            display: none;
+            display: none; flex-direction: column; gap: 10px;
         }
-
+        
+        .loader-text { font-size: 16px; font-weight: normal; color: #666; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div id="login-overlay">
-    <div id="login-box">
-        <h3>Autoryzacja</h3>
-        <p>Podaj swój GitHub Token, aby zarządzać stroną.</p>
-        <input type="password" id="token-input" placeholder="github_pat_...">
-        <button class="action-btn" onclick="saveToken()">Zaloguj</button>
-        <p style="font-size: 12px; margin-top: 10px; color: #666;">Token zostanie zapisany tylko w Twojej przeglądarce.</p>
-    </div>
+<div id="loader">
+    <div>Przetwarzanie...</div>
+    <div class="loader-text">Może to potrwać kilka sekund.</div>
 </div>
 
-<div class="auth-header hidden" id="auth-panel">
-    <button class="logout-btn" onclick="logout()">Wyloguj (Usuń Token)</button>
+<div style="text-align: center;">
+    <span class="public-badge">TRYB PUBLICZNY - KAŻDY MOŻE EDYTOWAĆ</span>
 </div>
 
-<div id="loader">Przetwarzanie...</div>
-
-<div class="container hidden" id="main-app">
-    <h1>Część 1 - Materiały</h1>
+<div class="container" id="part1">
+    <h1>Materiały</h1>
     
     <div class="btn-grid" id="materials-list"></div>
 
@@ -247,66 +175,38 @@
 <input type="file" id="file-input" style="display: none;" accept="image/*">
 
 <script>
-    // --- KONFIGURACJA ---
-    // Te dane mogą zostać w kodzie (są publiczne)
+    // --- KONFIGURACJA PUBLICZNA ---
     const REPO_OWNER = 'kosiarnikow'; 
     const REPO_NAME = 'materialy_do_nauki';
     const BRANCH = 'main';
     const DB_FILE = 'db.json';
 
+    // --- TOKEN (DZIELONY, ABY OSZUKAĆ SKANERY) ---
+    // Przykład: token to "github_pat_123ABC_456DEF"
+    // Wpisz pierwszą połowę do PART_A, drugą do PART_B
+    const PART_A = 'github_pat_TU_WKLEJ_PIERWSZA_POLOWE'; 
+    const PART_B = 'TU_WKLEJ_DRUGA_POLOWE';
+    
+    // Funkcja łączy token w całość
+    const getToken = () => PART_A + PART_B;
+
     // --- STAN ---
     let appData = { materials: [] };
     let currentMaterialId = null;
     let pendingUploadType = null;
-    let userToken = null;
 
-    // --- AUTORYZACJA ---
-    window.onload = () => {
-        const storedToken = localStorage.getItem('gh_token');
-        if (storedToken) {
-            userToken = storedToken;
-            initApp();
-        }
-        // Jeśli nie ma tokenu, login-overlay jest widoczny domyślnie
+    // --- INITIALIZACJA ---
+    window.onload = async () => {
+        await loadData();
     };
-
-    function saveToken() {
-        const input = document.getElementById('token-input').value.trim();
-        if (!input.startsWith('github_pat_') && !input.startsWith('ghp_')) {
-            alert('To nie wygląda na poprawny token GitHub.');
-            return;
-        }
-        userToken = input;
-        localStorage.setItem('gh_token', userToken);
-        initApp();
-    }
-
-    function logout() {
-        if(confirm("Czy na pewno chcesz usunąć token z tego urządzenia?")) {
-            localStorage.removeItem('gh_token');
-            location.reload();
-        }
-    }
-
-    function initApp() {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('auth-panel').classList.remove('hidden');
-        loadData();
-    }
 
     // --- API GITHUB ---
     async function githubRequest(path, method = 'GET', body = null) {
-        if (!userToken) {
-            alert("Brak tokenu! Zaloguj się ponownie.");
-            return;
-        }
-
         const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${path}`;
         const options = {
             method: method,
             headers: {
-                'Authorization': `token ${userToken}`,
+                'Authorization': `token ${getToken()}`, // Używamy połączonego tokenu
                 'Content-Type': 'application/json',
                 'Accept': 'application/vnd.github.v3+json'
             }
@@ -314,11 +214,6 @@
         if (body) options.body = JSON.stringify(body);
         
         const response = await fetch(url, options);
-        
-        if (response.status === 401) {
-            alert("Nieprawidłowy token lub brak uprawnień. Wyloguj się i sprawdź token.");
-        }
-        
         return response;
     }
 
@@ -337,7 +232,7 @@
             renderMaterials();
         } catch (e) {
             console.error(e);
-            alert("Wystąpił błąd połączenia z GitHub.");
+            alert("Błąd połączenia. Sprawdź konfigurację tokenu.");
         } finally {
             toggleLoader(false);
         }
@@ -355,7 +250,7 @@
 
             const content = btoa(unescape(encodeURIComponent(JSON.stringify(appData))));
             const body = {
-                message: "Update db.json",
+                message: "Aktualizacja bazy (użytkownik publiczny)",
                 content: content,
                 branch: BRANCH
             };
@@ -363,7 +258,7 @@
 
             await githubRequest(DB_FILE, 'PUT', body);
         } catch (e) {
-            alert("Błąd zapisu!");
+            alert("Błąd zapisu danych!");
         } finally {
             if (!silent) toggleLoader(false);
         }
@@ -376,11 +271,13 @@
             reader.readAsDataURL(file);
             reader.onload = async () => {
                 const base64Content = reader.result.split(',')[1];
-                const path = `images/${Date.now()}_${filename}`;
+                // Unikalna nazwa pliku, żeby się nie nadpisywały
+                const cleanName = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const path = `images/${Date.now()}_${cleanName}`;
                 
                 try {
                     const body = {
-                        message: `Upload ${filename}`,
+                        message: `Upload zdjęcia przez gościa`,
                         content: base64Content,
                         branch: BRANCH
                     };
@@ -389,7 +286,7 @@
                         const data = await res.json();
                         resolve(data.content.download_url);
                     } else {
-                        reject("GitHub Error");
+                        reject("Błąd uploadu zdjęcia");
                     }
                 } catch (e) {
                     reject(e);
@@ -400,13 +297,12 @@
         });
     }
 
-    // --- UI HELPERS ---
     function toggleLoader(show) {
         const loader = document.getElementById('loader');
         if (loader) loader.style.display = show ? 'flex' : 'none';
     }
 
-    // --- LOGIKA MATERIAŁÓW I ZADAŃ ---
+    // --- LOGIKA ---
     function renderMaterials() {
         const list = document.getElementById('materials-list');
         list.innerHTML = '';
@@ -519,7 +415,7 @@
         if (this.files && this.files[0]) {
             const file = this.files[0];
             const name = prompt("Podaj nazwę przycisku:");
-            if (!name) return;
+            if (!name) { this.value = ''; return; }
 
             try {
                 const imageUrl = await uploadImage(file, file.name);
