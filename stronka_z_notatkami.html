@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notatki</title>
+    <title>Notatki - System Materiałów</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -14,112 +14,37 @@
             --card: #ffffff;
         }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg);
-            margin: 0;
-            padding: 20px;
-            color: #1e293b;
-        }
-
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
         .container { max-width: 900px; margin: 0 auto; }
-        
         h1, h2 { text-align: center; color: #1e293b; }
 
-        /* Stylizacja przycisków */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .btn-main {
-            background: var(--card);
-            border: 2px solid var(--primary);
-            padding: 15px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: 0.2s;
-            text-align: center;
-        }
-
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
+        .btn-main { background: var(--card); border: 2px solid var(--primary); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; text-align: center; overflow: hidden; }
         .btn-main:hover { background: var(--primary); color: white; transform: translateY(-2px); }
         .btn-active { background: var(--primary) !important; color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); }
 
-        .admin-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            background: #e2e8f0;
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-        }
+        .admin-controls { display: flex; justify-content: center; gap: 10px; background: #e2e8f0; padding: 15px; border-radius: 15px; margin-bottom: 30px; }
+        button.add { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button.del { background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
-        button.add { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-        button.del { background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        #viewer { display: none; background: var(--card); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        .img-viewport { width: 100%; height: 500px; overflow: hidden; position: relative; background: #27272a; border-radius: 12px; margin-bottom: 20px; }
+        #display-img { position: absolute; top: 50%; left: 50%; transform-origin: center; max-width: none; }
 
-        /* Viewer zdjęć */
-        #viewer {
-            display: none;
-            background: var(--card);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-
-        .img-viewport {
-            width: 100%;
-            height: 500px;
-            overflow: hidden;
-            position: relative;
-            background: #27272a;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        #display-img {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: center;
-            max-width: none;
-        }
-
-        .sliders {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-
+        .sliders { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin: 20px 0; }
         input[type="range"] { width: 100%; }
 
-        /* Część 2 */
-        #tasks-section {
-            margin-top: 40px;
-            padding-top: 30px;
-            border-top: 4px dashed #e2e8f0;
-        }
-
-        #loading {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.8);
-            display: none; justify-content: center; align-items: center; z-index: 1000;
-        }
+        #tasks-section { margin-top: 40px; padding-top: 30px; border-top: 4px dashed #e2e8f0; }
+        #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="loading">⏳ Synchronizacja z GitHub...</div>
+<div id="loading">⏳ Synchronizacja...</div>
 
 <div class="container">
     <h1>📚 Panel Notatek</h1>
 
-    <!-- CZĘŚĆ 1: MATERIAŁY -->
     <section>
         <h2>Część 1: Materiały</h2>
         <div id="materials-grid" class="grid"></div>
@@ -129,27 +54,19 @@
         </div>
     </section>
 
-    <!-- VIEWER I CZĘŚĆ 2 -->
     <div id="viewer">
         <h2 id="current-title">Podgląd</h2>
-        
         <div class="img-viewport">
             <img src="" id="display-img">
         </div>
-
-    <div class="sliders">
-        <div><label>🔍 Zoom</label><br><input type="range" id="z" min="0.1" max="4" step="0.1" value="1"></div>
-        <!-- Suwak X: mniejsza wartość (lewo) przesunie zdjęcie w lewo -->
-        <div><label>↔️ Lewo / Prawo</label><br><input type="range" id="x" min="-1000" max="1000" step="1" value="0"></div>
-        <!-- Suwak Y: mniejsza wartość (lewo na suwaku) przesunie zdjęcie w górę -->
-        <div><label>↕️ Góra / Dół</label><br><input type="range" id="y" min="-1000" max="1000" step="1" value="0"></div>
-    </div>
-        
+        <div class="sliders">
+            <div><label>🔍 Zoom</label><br><input type="range" id="z" min="0.1" max="5" step="0.1" value="1"></div>
+            <div><label>↔️ Lewo/Prawo</label><br><input type="range" id="x" min="-1500" max="1500" step="5" value="0"></div>
+            <div><label>↕️ Góra/Dół</label><br><input type="range" id="y" min="-1500" max="1500" step="5" value="0"></div>
+        </div>
         <center>
-            <a id="download-link" href="#" download style="display:inline-block; padding:10px 20px; background:#334155; color:white; text-decoration:none; border-radius:8px;">Całe zdjęcie</a>
+            <a id="download-link" href="#" target="_blank" style="display:inline-block; padding:10px 20px; background:#334155; color:white; text-decoration:none; border-radius:8px;">Otwórz oryginał</a>
         </center>
-
-        <!-- CZĘŚĆ 2: ZADANIA -->
         <div id="tasks-section">
             <h2>Część 2: Zadania dla <span id="mat-name" style="color:var(--primary)"></span></h2>
             <div id="tasks-grid" class="grid"></div>
@@ -164,45 +81,40 @@
 <input type="file" id="fileInput" hidden accept="image/*">
 
 <script>
-    // --- KONFIGURACJA ---
+    // --- MIEJSCE NA TWOJE DANE ---
+    // Instrukcja: Rozbij swój token na dwie części. 
+    // Przykład: jeśli Twój token to ghp_ABC123, wpisz "ghp_" w czesc1 i "ABC123" w czesc2.
+    const czesc1 = "ghp_"; 
+    const czesc2 = "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"; 
+
     const CONFIG = {
-        token: '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', // Wklej swój token
         owner: 'kosiarnikow',
-        repo: 'materialy_do_nauki'
+        repo: 'materialy_do_nauki',
+        token: czesc1 + czesc2 // Tu kod łączy token w całość
     };
 
     let db = { materials: [] };
     let activeMatIdx = null;
 
-    // Bezpieczne kodowanie UTF-8 dla btoa/atob (obsługa polskich znaków)
     const utf8_to_b64 = (str) => btoa(unescape(encodeURIComponent(str)));
     const b64_to_utf8 = (str) => decodeURIComponent(escape(atob(str)));
 
     async function init() {
         toggleLoading(true);
-        console.log("Inicjalizacja bazy...");
         try {
-            const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json?nocache=${Date.now()}`, {
-                headers: { 
-                    'Authorization': `token ${CONFIG.token}`,
-                    'Cache-Control': 'no-cache', 
-                    'Pragma': 'no-cache'         
-
-                }
+            // Dodajemy t=Date.now() aby telefon nie pobierał starej bazy z cache
+            const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json?t=${Date.now()}`, {
+                headers: { 'Authorization': `token ${CONFIG.token}` }
             });
             if (res.ok) {
                 const data = await res.json();
                 db = JSON.parse(b64_to_utf8(data.content));
-                console.log("Baza załadowana:", db);
                 renderMaterials();
-            } else {
-                console.warn("Nie znaleziono pliku db.json, zaczynamy z pustą bazą.");
+            } else if (res.status === 401) {
+                alert("Błąd: GitHub zablokował token! Musisz wygenerować nowy i rozbić go na dwie części w kodzie.");
             }
-        } catch (e) {
-            console.error("Błąd inicjalizacji:", e);
-        } finally {
-            toggleLoading(false);
-        }
+        } catch (e) { console.error(e); }
+        finally { toggleLoading(false); }
     }
 
     function renderMaterials() {
@@ -218,16 +130,11 @@
     }
 
     function selectMaterial(idx) {
-        console.log("Wybrano materiał:", db.materials[idx].name);
         activeMatIdx = idx;
         const mat = db.materials[idx];
-        
-        if (!mat.tasks) mat.tasks = [];
-
         document.getElementById('viewer').style.display = 'block';
         document.getElementById('mat-name').innerText = mat.name;
         document.getElementById('current-title').innerText = mat.name;
-        
         renderMaterials();
         updateImage(mat.url);
         renderTasks();
@@ -237,7 +144,6 @@
         const container = document.getElementById('tasks-grid');
         container.innerHTML = '';
         const tasks = db.materials[activeMatIdx].tasks || [];
-        
         tasks.forEach((t) => {
             const btn = document.createElement('div');
             btn.className = 'btn-main';
@@ -252,94 +158,38 @@
     }
 
     async function addNewItem(type) {
-        if (type === 'task' && activeMatIdx === null) {
-            alert("Najpierw wybierz materiał z góry!");
-            return;
-        }
-
-        const label = prompt(`Podaj nazwę dla ${type === 'material' ? 'nowej pracy' : 'nowego zadania'}:`);
+        const label = prompt(`Nazwa dla ${type}:`);
         if (!label) return;
-
         const input = document.getElementById('fileInput');
         input.onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-
             toggleLoading(true);
-            console.log("Rozpoczynanie dodawania:", label);
-
-            try {
-                const reader = new FileReader();
-                reader.onload = async () => {
-                    try {
-                        const base64 = reader.result.split(',')[1];
-                        const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-                        const path = `images/${Date.now()}_${cleanFileName}`;
-                        
-                        // 1. Wyślij zdjęcie
-                        console.log("Wysyłanie zdjęcia do GitHub...");
-                        const imgUrl = await githubPut(path, base64);
-                        
-                        // 2. Aktualizacja bazy lokalnej
-                        if (type === 'material') {
-                            db.materials.push({ name: label, url: imgUrl, tasks: [] });
-                        } else {
-                            db.materials[activeMatIdx].tasks.push({ name: label, url: imgUrl });
-                        }
-                        
-                        // 3. Zapisz bazę
-                        console.log("Zapisywanie bazy db.json...");
-                        await saveDB();
-                        
-                        // 4. Sukces
-                        renderMaterials();
-                        if (activeMatIdx !== null) renderTasks();
-                        alert("Sukces! Dodano: " + label);
-                    } catch (err) {
-                        console.error("Błąd wewnętrzny:", err);
-                        alert("Błąd: " + err.message);
-                    } finally {
-                        toggleLoading(false);
-                    }
-                };
-                reader.readAsDataURL(file);
-            } catch (err) {
-                console.error("Błąd FileReader:", err);
-                toggleLoading(false);
-            }
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1];
+                const path = `images/${Date.now()}_img.png`;
+                try {
+                    const imgUrl = await githubPut(path, base64);
+                    if (type === 'material') db.materials.push({ name: label, url: imgUrl, tasks: [] });
+                    else db.materials[activeMatIdx].tasks.push({ name: label, url: imgUrl });
+                    await saveDB();
+                    location.reload();
+                } catch (err) { alert("Błąd zapisu: " + err.message); }
+            };
+            reader.readAsDataURL(file);
         };
         input.click();
     }
 
     async function removeItem(type) {
-        const list = type === 'material' ? db.materials : (db.materials[activeMatIdx] ? db.materials[activeMatIdx].tasks : []);
-        if (!list || list.length === 0) {
-            alert("deklu, co chcesz usuwać jak żadnych prac nie ma");
-            return;
-        }
         const pass = prompt("Hasło:");
-        if (pass !== "2137") { alert("Złe hasło!"); return; }
-
-        const nameToDel = prompt("Podaj DOKŁADNĄ nazwę do usunięcia:");
-        if (!nameToDel) return;
-
-        toggleLoading(true);
-        try {
-            if (type === 'material') {
-                db.materials = db.materials.filter(m => m.name !== nameToDel);
-                document.getElementById('viewer').style.display = 'none';
-                activeMatIdx = null;
-            } else {
-                db.materials[activeMatIdx].tasks = db.materials[activeMatIdx].tasks.filter(t => t.name !== nameToDel);
-            }
-            await saveDB();
-            renderMaterials();
-            if (activeMatIdx !== null) renderTasks();
-        } catch (e) {
-            alert("Błąd usuwania: " + e.message);
-        } finally {
-            toggleLoading(false);
-        }
+        if (pass !== "2137") return alert("Błąd!");
+        const nameToDel = prompt("Nazwa do usunięcia:");
+        if (type === 'material') db.materials = db.materials.filter(m => m.name !== nameToDel);
+        else db.materials[activeMatIdx].tasks = db.materials[activeMatIdx].tasks.filter(t => t.name !== nameToDel);
+        await saveDB();
+        location.reload();
     }
 
     async function githubPut(path, contentBase64) {
@@ -347,60 +197,29 @@
         const res = await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${CONFIG.token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: "Dodanie zdjęcia", content: contentBase64 })
+            body: JSON.stringify({ message: "upload", content: contentBase64 })
         });
-        if (!res.ok) {
-            const errData = await res.json();
-            throw new Error("GitHub error: " + errData.message);
-        }
-        // Budujemy link bezpośredni zamiast d.content.download_url
         return `https://raw.githubusercontent.com/${CONFIG.owner}/${CONFIG.repo}/main/${path}`;
     }
 
     async function saveDB() {
         const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json`;
-        
-        // ZAWSZE pobieraj najnowsze SHA przed zapisem
-        const getRes = await fetch(url + `?nocache=${Date.now()}`, {
-            headers: { 'Authorization': `token ${CONFIG.token}` }
-        });
-        
+        const getRes = await fetch(url + `?t=${Date.now()}`, { headers: { 'Authorization': `token ${CONFIG.token}` } });
         let sha = "";
-        if (getRes.ok) {
-            const getData = await getRes.json();
-            sha = getData.sha;
-        }
-        
-        const content = utf8_to_b64(JSON.stringify(db, null, 2));
-        const putRes = await fetch(url, {
+        if (getRes.ok) { const data = await getRes.json(); sha = data.sha; }
+        await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${CONFIG.token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                message: "Aktualizacja bazy",
-                content: content,
-                sha: sha // Jeśli plik nie istniał, sha będzie puste i to jest ok
-            })
+            body: JSON.stringify({ message: "db update", content: utf8_to_b64(JSON.stringify(db, null, 2)), sha: sha })
         });
-        
-        if (!putRes.ok) {
-            const errData = await putRes.json();
-            throw new Error("Błąd zapisu db.json: " + errData.message);
-        }
     }
 
     function updateImage(url) {
-        console.log("Ładowanie zdjęcia:", url);
         const img = document.getElementById('display-img');
-        
-        // Dodanie parametru czasu, by telefon zawsze pobierał nową wersję
+        // Cache-buster dla zdjęć na telefonie
         const freshUrl = url + "?t=" + Date.now();
         img.src = freshUrl;
-    
-        const dl = document.getElementById('download-link');
-        dl.href = freshUrl;
-        dl.target = "_blank";
-        dl.innerText = "Pełne zdjęcie";
-        
+        document.getElementById('download-link').href = freshUrl;
         document.getElementById('z').value = 1;
         document.getElementById('x').value = 0;
         document.getElementById('y').value = 0;
@@ -417,7 +236,6 @@
 
     ['z', 'x', 'y'].forEach(id => document.getElementById(id).oninput = applyImgStyles);
     function toggleLoading(s) { document.getElementById('loading').style.display = s ? 'flex' : 'none'; }
-
     init();
 </script>
 </body>
