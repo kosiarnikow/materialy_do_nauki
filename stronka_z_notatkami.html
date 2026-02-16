@@ -183,7 +183,12 @@
         console.log("Inicjalizacja bazy...");
         try {
             const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json?nocache=${Date.now()}`, {
-                headers: { 'Authorization': `token ${CONFIG.token}` }
+                headers: { 
+                    'Authorization': `token ${CONFIG.token}`,
+                    'Cache-Control': 'no-cache', 
+                    'Pragma': 'no-cache'         
+
+                }
             });
             if (res.ok) {
                 const data = await res.json();
@@ -386,11 +391,13 @@
     function updateImage(url) {
         console.log("Ładowanie zdjęcia:", url);
         const img = document.getElementById('display-img');
-        img.src = url;
         
-        // Naprawa przycisku pobierania
+        // Dodanie parametru czasu, by telefon zawsze pobierał nową wersję
+        const freshUrl = url + "?t=" + Date.now();
+        img.src = freshUrl;
+    
         const dl = document.getElementById('download-link');
-        dl.href = url;
+        dl.href = freshUrl;
         dl.target = "_blank";
         dl.innerText = "Pełne zdjęcie";
         
