@@ -10,6 +10,7 @@
             --primary: #4f46e5;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             --bg: #f8fafc;
             --card: #ffffff;
         }
@@ -19,13 +20,17 @@
         h1, h2 { text-align: center; color: #1e293b; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
-        .btn-main { background: var(--card); border: 2px solid var(--primary); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; text-align: center; overflow: hidden; }
+        .btn-main { background: var(--card); border: 2px solid var(--primary); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.2s; text-align: center; overflow: hidden; position: relative; }
         .btn-main:hover { background: var(--primary); color: white; transform: translateY(-2px); }
         .btn-active { background: var(--primary) !important; color: white !important; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4); }
 
-        .admin-controls { display: flex; justify-content: center; gap: 10px; background: #e2e8f0; padding: 15px; border-radius: 15px; margin-bottom: 30px; }
-        button.add { background: var(--success); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        button.del { background: var(--danger); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .admin-controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; background: #e2e8f0; padding: 15px; border-radius: 15px; margin-bottom: 30px; }
+        button { border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
+        
+        .add { background: var(--success); }
+        .del { background: var(--danger); }
+        .edit { background: var(--warning); }
 
         #viewer { display: none; background: var(--card); padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
         .img-viewport { width: 100%; height: 500px; overflow: hidden; position: relative; background: #27272a; border-radius: 12px; margin-bottom: 20px; }
@@ -49,8 +54,9 @@
         <h2>Część 1: Materiały</h2>
         <div id="materials-grid" class="grid"></div>
         <div class="admin-controls">
-            <button class="add" onclick="addNewItem('material')">Dodaj prace</button>
-            <button class="del" onclick="removeItem('material')">Usuń prace</button>
+            <button class="add" onclick="addNewItem('material')">➕ Dodaj prace</button>
+            <button class="edit" onclick="manageItems('material')">⚙️ Zarządzaj kafelkami</button>
+            <button class="del" onclick="removeItem('material')">🗑️ Usuń prace</button>
         </div>
     </section>
 
@@ -71,8 +77,9 @@
             <h2>Część 2: Zadania dla <span id="mat-name" style="color:var(--primary)"></span></h2>
             <div id="tasks-grid" class="grid"></div>
             <div class="admin-controls">
-                <button class="add" onclick="addNewItem('task')">Dodaj zadanie</button>
-                <button class="del" onclick="removeItem('task')">Usuwanie</button>
+                <button class="add" onclick="addNewItem('task')">➕ Dodaj zadanie</button>
+                <button class="edit" onclick="manageItems('task')">⚙️ Zarządzaj zadaniami</button>
+                <button class="del" onclick="removeItem('task')">🗑️ Usuwanie</button>
             </div>
         </div>
     </div>
@@ -82,15 +89,13 @@
 
 <script>
     // --- MIEJSCE NA TWOJE DANE ---
-    // Instrukcja: Rozbij swój token na dwie części. 
-    // Przykład: jeśli Twój token to ghp_ABC123, wpisz "ghp_" w czesc1 i "ABC123" w czesc2.
     const czesc1 = "github_pat_"; 
     const czesc2 = "11AVOUTHY0HQO2w1Nmn8IM_E7aCOLSsEzSqdWMsz8uLZJxw1LuDPl1HUNcCwbL2au0P4DJJNE6wUhDdgeH"; 
 
     const CONFIG = {
         owner: 'kosiarnikow',
         repo: 'materialy_do_nauki',
-        token: czesc1 + czesc2 // Tu kod łączy token w całość
+        token: czesc1 + czesc2
     };
 
     let db = { materials: [] };
@@ -102,7 +107,6 @@
     async function init() {
         toggleLoading(true);
         try {
-            // Dodajemy t=Date.now() aby telefon nie pobierał starej bazy z cache
             const res = await fetch(`https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/db.json?t=${Date.now()}`, {
                 headers: { 'Authorization': `token ${CONFIG.token}` }
             });
@@ -110,8 +114,6 @@
                 const data = await res.json();
                 db = JSON.parse(b64_to_utf8(data.content));
                 renderMaterials();
-            } else if (res.status === 401) {
-                alert("Błąd: GitHub zablokował token! Musisz wygenerować nowy i rozbić go na dwie części w kodzie.");
             }
         } catch (e) { console.error(e); }
         finally { toggleLoading(false); }
@@ -157,6 +159,44 @@
         });
     }
 
+    // --- NOWA FUNKCJA: ZARZĄDZANIE (ZMIANA NAZWY I KOLEJNOŚCI) ---
+    async function manageItems(type) {
+        let list = type === 'material' ? db.materials : db.materials[activeMatIdx].tasks;
+        if (!list || list.length === 0) return alert("Brak elementów do edycji!");
+
+        const name = prompt("Podaj DOKŁADNĄ nazwę elementu, który chcesz edytować:");
+        const idx = list.findIndex(item => item.name === name);
+        
+        if (idx === -1) return alert("Nie znaleziono takiego elementu!");
+
+        const action = prompt("Co chcesz zrobić?\n1 - Zmień nazwę\n2 - Przesuń w lewo (wyżej)\n3 - Przesuń w prawo (niżej)");
+
+        if (action === "1") {
+            const newName = prompt("Podaj nową nazwę:", list[idx].name);
+            if (newName) list[idx].name = newName;
+        } 
+        else if (action === "2") {
+            if (idx > 0) {
+                [list[idx], list[idx-1]] = [list[idx-1], list[idx]];
+            } else {
+                alert("Element jest już na początku!"); return;
+            }
+        } 
+        else if (action === "3") {
+            if (idx < list.length - 1) {
+                [list[idx], list[idx+1]] = [list[idx+1], list[idx]];
+            } else {
+                alert("Element jest już na końcu!"); return;
+            }
+        } else {
+            return;
+        }
+
+        toggleLoading(true);
+        await saveDB();
+        location.reload();
+    }
+
     async function addNewItem(type) {
         const label = prompt(`Nazwa dla ${type}:`);
         if (!label) return;
@@ -175,7 +215,7 @@
                     else db.materials[activeMatIdx].tasks.push({ name: label, url: imgUrl });
                     await saveDB();
                     location.reload();
-                } catch (err) { alert("Błąd zapisu: " + err.message); }
+                } catch (err) { alert("Błąd: " + err.message); }
             };
             reader.readAsDataURL(file);
         };
@@ -194,7 +234,7 @@
 
     async function githubPut(path, contentBase64) {
         const url = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
-        const res = await fetch(url, {
+        await fetch(url, {
             method: 'PUT',
             headers: { 'Authorization': `token ${CONFIG.token}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: "upload", content: contentBase64 })
@@ -216,7 +256,6 @@
 
     function updateImage(url) {
         const img = document.getElementById('display-img');
-        // Cache-buster dla zdjęć na telefonie
         const freshUrl = url + "?t=" + Date.now();
         img.src = freshUrl;
         document.getElementById('download-link').href = freshUrl;
